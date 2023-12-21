@@ -1,0 +1,47 @@
+.syllabus-table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    border: none;
+    width: 100%;
+  }
+  
+  /* table td,
+  table th {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+  } */
+  
+  .syllabus-table tr:nth-child(even) {
+    background-color: #f8f6f8;
+  }
+  
+  .syllabus-table td:nth-child(even) {
+    text-align: right;
+  }
+  
+  .syllabus-table td {
+    border: none;
+    padding: 12px 16px;
+    color: #1a0e15;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+  
+  .syllabus-table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: right;
+    color: #575457;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 30px;
+    border: none;
+    outline: none;
+    border-bottom: 1px solid #1a0e15;
+  }
+  
+  .syllabus-table th:nth-child(1) {
+    text-align: left;
+  }
+  
