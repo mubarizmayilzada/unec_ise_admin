@@ -30,6 +30,7 @@ import AcademicProgramsDetailsUI from "./pages/academic-programs/academicProgram
 import CourseCreate from "./pages/course/courseCreate";
 import CourseEdit from "./pages/course/courseEdit";
 import CourseUI from "./pages/course/courseUI";
+import ContactUI from "./pages/contact/contactUI";
 
 function App() {
   return (
@@ -97,6 +98,8 @@ function App() {
         <Route path="/course/edit/:id" element={<CourseEdit />} />
         <Route path="/course/create" element={<CourseCreate />} />
         <Route path="/course" element={<CourseUI />} />
+
+        <Route path="/contact" element={<ContactUI />} />
       </Routes>
     </section>
   );

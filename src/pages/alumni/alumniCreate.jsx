@@ -40,6 +40,7 @@ const AlumniEdit = () => {
         }
       );
       alert("Successfully created:");
+      navigate("/alumni");
     } catch (error) {
       console.error("Error:", error);
       // Handle error

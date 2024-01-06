@@ -275,6 +275,26 @@ const StudentClubEdit = () => {
         className="flex flex-col gap-[25px] w-[350px]"
       >
         <div className="flex flex-col gap-[10px]">
+          {/* Conditional rendering for the image */}
+          {imagePreview && (
+            <img src={imagePreview} alt="Selected" className="object-cover" />
+          )}
+          {!imagePreview && (
+            <img src={program.file} alt="Current" className="object-cover" />
+          )}
+          <label className="cursor-pointer inline w-fit" htmlFor="img">
+            Image
+          </label>
+          <input
+            className="border-[1px] py-[10px] px-[7px] outline-none border-[black] rounded-[5px]"
+            type="file"
+            name="image"
+            id="img"
+            onChange={handleImageChange}
+          />
+        </div>
+
+        <div className="flex flex-col gap-[10px]">
           <label
             className="cursor-pointer inline w-fit text-[20px] font-[500]"
             htmlFor="title"
@@ -324,22 +344,6 @@ const StudentClubEdit = () => {
               "link",
               "image",
             ]}
-          />
-        </div>
-
-        <div className="flex flex-col gap-[10px]">
-          {/* Conditional rendering for the image */}
-          {imagePreview && <img src={imagePreview} alt="Selected" />}
-          {!imagePreview && <img src={program.file} alt="Current" />}
-          <label className="cursor-pointer inline w-fit" htmlFor="img">
-            Image
-          </label>
-          <input
-            className="border-[1px] py-[10px] px-[7px] outline-none border-[black] rounded-[5px]"
-            type="file"
-            name="image"
-            id="img"
-            onChange={handleImageChange}
           />
         </div>
 

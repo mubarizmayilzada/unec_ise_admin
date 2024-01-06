@@ -127,6 +127,7 @@ import React from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
+import { useNavigate } from "react-router-dom";
 
 const PublicationCreate = () => {
   const {
@@ -136,6 +137,7 @@ const PublicationCreate = () => {
     setError,
     control,
   } = useForm();
+  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     try {
@@ -158,6 +160,7 @@ const PublicationCreate = () => {
 
       alert("Successfully posted");
       // Handle success
+      navigate("/publication");
     } catch (error) {
       console.error("Error:", error);
       // Handle error state

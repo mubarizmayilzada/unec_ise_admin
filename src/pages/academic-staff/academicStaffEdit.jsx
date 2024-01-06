@@ -1,6 +1,6 @@
 import { DevTool } from "@hookform/devtools";
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -12,15 +12,14 @@ const AcademicStaffEdit = () => {
   );
 
   const { id } = useParams();
-  const [program, setProgram] = useState({});
+  const [program, setProgram] = useState(null);
   // const [image, setImage] = useState([]);
   const [image, setImage] = useState(null); // Track the selected image
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); // For displaying the preview of the selected image
   const [adminstrativeStaff, setAdminstrativeStaff] = useState([]); // [
   const [location, setLocation] = useState("");
   const [categoryKey, setCategoryKey] = useState("");
 
-  console.log(adminstrativeStaff);
   const handleGetImage = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -28,8 +27,6 @@ const AcademicStaffEdit = () => {
       setImagePreview(URL.createObjectURL(file)); // Create a URL for preview
     }
   };
-
-
 
   const onSubmit = async (data) => {
     try {
@@ -46,7 +43,14 @@ const AcademicStaffEdit = () => {
       if (image) {
         formData.append("file", image);
       }
-      formData.append("SaveAcademicDetailRequests", academicCategories);
+
+      data.editorValues.map((item, index) => {
+        formData.append(`SaveAcademicDetailRequests[${index}].name`, item.name);
+        formData.append(
+          `SaveAcademicDetailRequests[${index}].academicStaffCategoryId`,
+          item.academicStaffCategoryId
+        );
+      });
       const response = await axios.put(
         `http://test-api.com/api/v1/Academic/${id}`,
         formData
@@ -64,79 +68,82 @@ const AcademicStaffEdit = () => {
     }
   };
 
-  //   const { control, handleSubmit, setValue, watch } = useForm({
-  //     defaultValues: async () => {
-  //       const response2 = await axios.get(
-  //         `http://test-api.com/api/v1/academicStaffCategory`
-  //       );
-  //       const academicStaffCategories = response2.data.result;
-  //       setAcademicStaffCategories(academicStaffCategories);
-  //       return {
-  //         academicCategories: academicStaffCategories.map((category) => {
-  //           return {
-  //             academicStaffCategoryId: category.key,
-  //             name: "",
-  //             title: category.value,
-  //           };
-  //         }),
-  //       };
-  //     },
-  //   });
+  const { form, control, setValue, register, handleSubmit, getValues, watch } =
+    useForm(
+      {
+        defaultValues: async () => {
+          const response = await axios.get(
+            `http://test-api.com/api/v1/Academic/${id}`
+          );
 
-  const form = useForm({
-    defaultValues: async () => {
-      const response2 = await axios.get(
-        `http://test-api.com/api/v1/academicStaffCategory`
-      );
-      const academicStaffCategories = response2.data.result;
-      setAcademicStaffCategories(academicStaffCategories);
-
-      const response = await axios.get(
-        `http://test-api.com/api/v1/Academic/${id}`
-      );
-      const programData = response.data;
-      setProgram(programData);
-      console.log(programData);
-      setImagePreview(programData.file);
-      return {
-        academicCategories: academicStaffCategories.map((category) => {
+          const response2 = await axios.get(
+            `http://test-api.com/api/v1/academicStaffCategory`
+          );
+          const academicStaffCategories = response2.data.result;
+          setAcademicStaffCategories(academicStaffCategories);
+          const programData = response.data;
+          setProgram(programData.academicDetailCategoryDtos);
+          setImagePreview(programData.file);
           return {
-            academicStaffCategoryId: category.key,
-            name: "",
-            title: category.value,
+            academicCategories: response.data.academicDetailCategoryDtos.map(
+              (category) => {
+                return {
+                  academicStaffCategoryId: category.id,
+                  name: category.academicStaffCategoryName,
+                  title: category.value,
+                };
+              }
+            ),
+            editorValues: Array.from(
+              response.data.academicDetailCategoryDtos
+            ).map((item) => {
+              return {
+                academicStaffCategoryId: item.id,
+                name: item.value,
+              };
+            }),
+            name: programData?.fullName,
+            image: programData?.file,
+            position: programData?.position,
+            email: programData?.email,
+            office: programData?.office,
+            assistant: programData?.assistant,
+            phone: programData?.phone,
+            linkedinLink: programData?.linkedinLink,
+            GoogLeScholarLink: programData?.googLeScholarLink,
+            cvLink: programData?.cvLink,
           };
-        }),
-        name: programData?.fullName,
-        image: programData?.file,
-        position: programData?.position,
-        email: programData?.email,
-        office: programData?.office,
-        assistant: programData?.assistant,
-        phone: programData?.phone,
-        linkedinLink: programData?.linkedinLink,
-        GoogLeScholarLink: programData?.googLeScholarLink,
-        cvLink: programData?.cvLink,
-      };
-    },
-  });
-
-  const { register, control, handleSubmit, getValues, setValue, watch } = form;
-  const academicCategories = useFieldArray({
-    control,
-    name: "academicCategories",
-  });
-
-  // const handleGetImage = (e) => {
-  //   setImage(e.target.files[0]);
-  // };
+        },
+      },
+      []
+    );
 
   const handleImageChange = (e) => {
+    console.log(e.target.files);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImage(file);
       setImagePreview(URL.createObjectURL(file)); // Create a URL for preview
     }
   };
+
+  const { fields: categoryFields } = useFieldArray({
+    control,
+    name: "catiegories",
+  });
+
+  const { fields: editorValuesFields } = useFieldArray({
+    control,
+    name: "editorValues",
+  });
+
+  // const handleImageChange = (e) => {
+  //   if (e.target.files && e.target.files) {
+  //     const file = e.target.files;
+  //     setSelectedImage(file);
+  //     setImagePreview(URL.createObjectURL(file)); // Create and set the image preview URL
+  //   }
+  // };
 
   const navigate = useNavigate();
 
@@ -146,24 +153,14 @@ const AcademicStaffEdit = () => {
         `http://test-api.com/api/v1/Academic/${id}`
       );
       alert("Deletion Successful:", response.data);
-      navigate("/adminstrative-staff");
+      navigate("/academic-staff");
     } catch (error) {
       console.error("Error:", error);
       // Handle error
     }
   };
 
-  React.useEffect(() => {
-    const getAdminstrativeStaff = async () => {
-      const response = await axios.get(
-        `http://test-api.com/api/v1/academicStaffCategory`
-      );
-      const adminstrativeStaff = response.data.result;
-      setAdminstrativeStaff(adminstrativeStaff);
-    };
-
-    getAdminstrativeStaff();
-  }, []);
+  console.log(editorValuesFields);
 
   return (
     <section className=" flex flex-col mx-[100px] my-[25px] items-left w-[100%]">
@@ -176,18 +173,20 @@ const AcademicStaffEdit = () => {
         className="flex flex-col gap-[25px] w-[350px]"
       >
         <div className="flex flex-col gap-[10px]">
-          {/* <img src={program.file} alt="" /> */}
-          {imagePreview && <img src={imagePreview} alt="Selected" />}
-          {!imagePreview && <p>No image selected</p>}
-          <label className="cursor-pointer inline w-fit" htmlFor="img">
+          {/* Image preview */}
+          {imagePreview && <img src={imagePreview} alt="Event" />}
+          <label
+            className="cursor-pointer inline w-fit font-[700]"
+            htmlFor="img"
+          >
             Image
           </label>
           <input
-            className="border-[1px] py-[10px] px-[7px] outline-none border-[#ccc] rounded-[5px]"
+            className="border-[1px] py-[10px] px-[7px] outline-none border-[black] rounded-[5px]"
             type="file"
             name="image"
             id="img"
-            onClick={handleImageChange}
+            onChange={handleImageChange}
           />
         </div>
         <div className="flex flex-col gap-[10px]">
@@ -290,26 +289,26 @@ const AcademicStaffEdit = () => {
           />
         </div>
 
-        <div>
-          {academicCategories?.fields.map((item, index) => {
-            return (
-              <div key={item.id}>
-                <label className="inline-block my-[20px]">{item.title}</label>
-                <Controller
-                  control={control}
-                  name={`academicCategories.${index}.name`}
-                  render={({ field }) => (
-                    <ReactQuill
-                      className="w-[600px]"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-              </div>
-            );
-          })}
-        </div>
+        {program && Array.isArray(program) ? (
+          <div>
+            {program.map((item, index) => {
+              return (
+                <div key={item.id}>
+                  <label className="block my-[20px]">
+                    {item.academicStaffCategoryName}
+                  </label>
+                  <textarea
+                    className="border-[1px] py-[10px] px-[7px] outline-none border-[#ccc] rounded-[5px]"
+                    name={`editorValues.[${index}].name`}
+                    {...register(`editorValues[${index}].name`)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <></>
+        )}
 
         <button
           onClick={handleSubmit(onSubmit)}

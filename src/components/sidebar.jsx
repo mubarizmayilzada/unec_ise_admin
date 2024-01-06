@@ -60,6 +60,18 @@ const Sidebar = () => {
           >
             Academic Programs
           </Link>
+          <Link
+            to={"/course"}
+            className="p-[7px] hover:bg-[#2a0d1c] rounded-[8px]"
+          >
+            Course
+          </Link>
+          <Link
+            to={"/contact"}
+            className="p-[7px] hover:bg-[#2a0d1c] rounded-[8px]"
+          >
+            Contact
+          </Link>
         </ul>
       </div>
     </section>

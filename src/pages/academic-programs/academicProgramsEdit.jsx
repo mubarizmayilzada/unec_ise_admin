@@ -1,15 +1,15 @@
 import { DevTool } from "@hookform/devtools";
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import { useForm, Controller, set } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { v4 as uuidv4 } from "uuid";
-const AcademicProgramsEdit = () => {
+import { useForm, useFieldArray } from "react-hook-form";
+
+const Test = () => {
   const { id } = useParams();
   const [program, setProgram] = useState({});
-  const [data, setData] = useState({ key: "test", value: "test" });
   const [name, setName] = useState("");
   const [image, setImage] = useState(null);
   const [description, setDescription] = useState("");
@@ -18,17 +18,24 @@ const AcademicProgramsEdit = () => {
   const [doubleDiplome, setDoubleDiplome] = useState("");
   const [courses, setCourses] = useState("");
   const [courseCategories, setCourseCategories] = useState("");
-  const [courseRelationsKeyValue, setCourseRelationsKeyValue] = useState([]);
-  const [courseRelations, setCourseRelations] = useState([]);
   const navigate = useNavigate();
-  const [selectedCourseIds, setSelectedCourseIds] = useState({});
-  const [apData, setapData] = useState([1]);
 
   const {
     handleSubmit,
     control,
     formState: { errors },
+    register,
+    setValue,
   } = useForm();
+
+  const {
+    fields: courseRelationsFields,
+    append: appendCourseRelation,
+    remove: removeCourseRelation,
+  } = useFieldArray({
+    control,
+    name: "courseRelationsRequests",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,7 +64,6 @@ const AcademicProgramsEdit = () => {
           courseCategoryListPromise,
           courseRelationsPromise,
         ]);
-
         const programData = response.data;
         setProgram(programData);
         setName(programData?.name || "");
@@ -68,21 +74,7 @@ const AcademicProgramsEdit = () => {
         setCourses(coursesList.data.result);
         setCourseCategories(courseCategoryList.data.result);
 
-        const mappedCourseRelations = courseRelationsResponse.data.map((x) => {
-          return { ...x, guid: uuidv4() };
-        });
-
-        const mappedCourseRelationsKeyValue = Array.from(
-          mappedCourseRelations
-        ).map((x) => {
-          return {
-            id: x.guid,
-            courseId: x.courseId,
-            courseCategoryId: x.courseCategoryId,
-          };
-        });
-        setCourseRelations(mappedCourseRelations);
-        setCourseRelationsKeyValue(mappedCourseRelationsKeyValue);
+        setValue("courseRelationsRequests", courseRelationsResponse.data || []);
 
         // Assuming "file" is the image field
         setImage(programData?.file || null);
@@ -92,18 +84,7 @@ const AcademicProgramsEdit = () => {
       }
     };
     fetchData();
-  }, [id, setCourses, setCourseCategories, setCourseRelations]);
-
-  useEffect(() => {
-    const initialCourseIds = {};
-    Array.from(courseRelations).forEach((relation) => {
-      initialCourseIds[relation.guid] = {
-        courseName: relation.courceName,
-        category: relation.courseCategoryName,
-      }; // Set a default value if needed
-    });
-    setSelectedCourseIds(initialCourseIds);
-  }, [courseRelations, setSelectedCourseIds]);
+  }, [id, setCourses, setCourseCategories]);
 
   const handleImageChange = (e) => {
     const selectedImage = e.target.files[0];
@@ -113,12 +94,26 @@ const AcademicProgramsEdit = () => {
   const onSubmit = async (data) => {
     try {
       const formData = new FormData();
-      formData.append("name", data.name);
-      formData.append("description", data.description);
-      formData.append("shortDescription", data.shortDescription);
-      formData.append("doubleDiplome", data.doubleDiplome);
-      formData.append("exchangeProgram", data.exchangeProgram);
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("shortDescription", shortDescription);
+      formData.append("doubleDiplome", doubleDiplome);
+      formData.append("exchangeProgram", exchangeProgram);
       formData.append("file", image);
+      Array.from(data.courseRelationsRequests).forEach(
+        (courseRelation, index) => {
+          formData.append(
+            `AcademicSyllabusRequests[${index}].courseId`,
+            courseRelation.courseId
+          );
+          formData.append(
+            `AcademicSyllabusRequests[${index}].courseCategoryId`,
+            courseRelation.courseCategoryId
+          );
+        }
+      );
+
+      console.log(formData);
 
       const response = await axios.put(
         `http://test-api.com/api/v1/academicProgram/${id}`,
@@ -139,77 +134,12 @@ const AcademicProgramsEdit = () => {
         `http://test-api.com/api/v1/academicProgram/${id}`
       );
       alert("Deletion Successful:", response.data);
-      navigate("/adminstrative-staff");
+      navigate("/academic-programs");
     } catch (error) {
       console.error("Error:", error);
       // Handle error
     }
   };
-
-  const handleapChange = () => {
-    setapData([...apData, Array.from(apData).length]);
-  };
-
-  const removeApRequest = (index) => {
-    const newContentRequests = apData.filter((_, idx) => idx !== index);
-    setapData(newContentRequests);
-  };
-
-  const handleCourseRelationsCourseIdChange = (e, index) => {
-    const selectValue = JSON.parse(e.target.value);
-    const id = uuidv4();
-    console.log(selectValue);
-    if (!selectedCourseIds[selectValue.key]) {
-      setSelectedCourseIds({
-        ...selectedCourseIds,
-        [id]: {
-          courseName: selectValue.value,
-          category: selectValue.value,
-        },
-      });
-    }
-    const updatedRelations = Array.from(courseRelationsKeyValue).map(
-      (courseRelation) => {
-        if (
-          courseRelation.id === selectValue.id &&
-          courseRelation.courseId !== selectValue.key
-        ) {
-          return {
-            ...courseRelation,
-            guid: id,
-            courseId: selectValue.key,
-          };
-        }
-        return courseRelation;
-      }
-    );
-    setCourseRelations(updatedRelations);
-    setCourseRelationsKeyValue(
-      updatedRelations.map((x) => {
-        return {
-          id: id,
-          courseId: x.courseId,
-          courseCategoryId: x.courseCategoryId,
-        };
-      })
-    );
-  };
-
-  const handleCourseRelationsCourseCategoryIdChange = (e, index) => {
-    const updatedRelations = Array.from(courseRelationsKeyValue).map(
-      (courseRelation) => {
-        if (courseRelation.courseCategoryId === e.target.value.key) {
-          return {
-            ...courseRelation,
-            courseCategoryId: e.target.value.key,
-          };
-        }
-        return courseRelation;
-      }
-    );
-    setCourseRelationsKeyValue(updatedRelations);
-  };
-
   return (
     <section className="flex flex-col mx-[100px] my-[25px] items-left w-[100%]">
       <h1 className="flex justify-center text-[28px] font-[500] mb-[30px]">
@@ -249,7 +179,7 @@ const AcademicProgramsEdit = () => {
 
         <div className="flex flex-col gap-[10px]">
           <label className="cursor-pointer inline w-fit" htmlFor="description">
-            Description
+            Short Description
           </label>
           <ReactQuill
             className="w-[800px] h-[auto] mb-[50px]" // Adjust the height as needed
@@ -284,7 +214,7 @@ const AcademicProgramsEdit = () => {
             className="cursor-pointer inline w-fit"
             htmlFor="shortDescription"
           >
-            Short Description
+            Description
           </label>
           <ReactQuill
             className="w-[800px] h-[auto] mb-[50px]" // Adjust the height as needed
@@ -385,56 +315,42 @@ const AcademicProgramsEdit = () => {
           />
         </div>
 
-        {Array.from(courseRelations).map((courseRelation, index) => (
+        {Array.from(courseRelationsFields).map((courseRelation, index) => (
           <div className="flex flex-col gap-[10px]" key={index}>
             <label className="cursor-pointer inline w-fit">
               Criteria {index + 1}
             </label>
             <select
               key={index + 1}
-              name="id"
-              id="id"
+              name="courseId"
+              id="courseId"
               placeholder=""
-              onChange={(e) => handleCourseRelationsCourseIdChange(e)}
-              value={selectedCourseIds[courseRelation.guid]}
               className="border-[1px] py-[10px] px-[7px] outline-none border-[black] rounded-[5px]"
+              {...register(`courseRelationsRequests.${index}.courseId`)}
             >
-              {Array.from(courses)?.map((Student) => (
-                <option
-                  value={JSON.stringify({
-                    id: courseRelation.guid,
-                    key: Student.key,
-                    value: Student.value,
-                  })}
-                >
+              {Array.from(courses)?.map((Student, index) => (
+                <option key={index} value={Student.key}>
                   {Student.value}
                 </option>
               ))}
             </select>
             <select
               key={index + 2}
-              name="id1"
-              id="id1"
+              name="courseCategoryId"
+              id="courseCategoryId"
               placeholder=""
-              value={selectedCourseIds[courseRelation.guid]}
-              onChange={(e) => handleCourseRelationsCourseCategoryIdChange(e)}
               className="border-[1px] py-[10px] px-[7px] outline-none border-[black] rounded-[5px]"
+              {...register(`courseRelationsRequests.${index}.courseCategoryId`)}
             >
-              {Array.from(courseCategories)?.map((Student) => (
-                <option
-                  value={JSON.stringify({
-                    id: courseRelation.guid,
-                    key: Student.key,
-                    value: Student.value,
-                  })}
-                >
+              {Array.from(courseCategories)?.map((Student, index) => (
+                <option key={index} value={Student.key}>
                   {Student.value}
                 </option>
               ))}
             </select>
             <button
               type="button"
-              onClick={() => removeApRequest(index)}
+              onClick={() => removeCourseRelation(index)}
               className="hover:text-[red]"
             >
               Remove Criteria
@@ -443,7 +359,12 @@ const AcademicProgramsEdit = () => {
         ))}
         <button
           type="button"
-          onClick={handleapChange}
+          onClick={() =>
+            appendCourseRelation({
+              courseId: courses[2].key || 1,
+              courseCategoryId: courseCategories[2].key || 1,
+            })
+          }
           className="border-[1px] border-[#ccc] hover:border-[#551D3B] py-[8px] px-[10px] rounded-[5px]"
         >
           Add Ap
@@ -469,4 +390,4 @@ const AcademicProgramsEdit = () => {
   );
 };
 
-export default AcademicProgramsEdit;
+export default Test;
