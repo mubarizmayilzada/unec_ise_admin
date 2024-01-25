@@ -39,9 +39,26 @@ const AdminstrativeStaffEdit = () => {
       // if (selectedImage) {
       //   formData.append("file", selectedImage);
       // }
+
+      // formData.append(
+      //   "file",
+      //   "http://test-api.com/api/v1/File?cyrptedPhoto=9XjofcuWZilKg9PaJNQKKA%3d%3d"
+      // );
+
       if (image) {
         formData.append("file", image);
+      } else {
+        const test = await fetch(imagePreview);
+        const blob = await test.blob();
+
+        const file = new File([blob], "image.jpg", { type: "image/jpeg" });
+
+        formData.append("file", file);
       }
+
+      // if (image) {
+      //   formData.append("File", image);
+      // }
       formData.append("administrativeStaffCategoryId", data.id);
       const response = await axios.put(
         `http://test-api.com/api/v1/administrative/${id}`,
@@ -67,6 +84,7 @@ const AdminstrativeStaffEdit = () => {
       setProgram(programData);
       console.log(programData);
       setImagePreview(programData.file);
+
       return {
         name: programData?.fullName,
         image: programData?.file,
@@ -114,6 +132,7 @@ const AdminstrativeStaffEdit = () => {
         `http://test-api.com/api/v1/administrativeStaffCategory`
       );
       const adminstrativeStaff = response.data.result;
+
       setAdminstrativeStaff(adminstrativeStaff);
     };
 

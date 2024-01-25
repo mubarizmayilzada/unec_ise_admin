@@ -8,6 +8,7 @@ import "react-quill/dist/quill.snow.css";
 
 const AboutEdit = () => {
   const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [value, setValue] = useState("");
 
   const [program, setProgram] = useState({});
@@ -15,24 +16,67 @@ const AboutEdit = () => {
     try {
       const formData = new FormData();
 
-      console.log(images);
-
       formData.append("title", value);
       formData.append("description", data.description);
       formData.append("missionVision", data.missionVision);
       formData.append("values", data.values);
       formData.append("Files", images);
 
+      // if (images.length > 0) {
+      //   console.log("here");
+
+      //   images.forEach((image) => {
+      //     formData.append("Files", image);
+      //   });
+      // } else {
+      //   console.log("else");
+      //   const filesPromises = program.file.map(async (f) => {
+      //     const test = await fetch(f);
+      //     const blob = await test.blob();
+
+      //     const file = new File([blob], "image.jpg", { type: "image/jpeg" });
+      //     return file;
+      //   });
+
+      //   const files = await Promise.all(filesPromises);
+
+      //   console.log({ files });
+
+      //   files.forEach((file) => {
+      //     formData.append("Files", file);
+      //   });
+      // }
+
+      //for new images
       images.forEach((image) => {
         formData.append("Files", image);
       });
+
+      //for existing images
+      const filesPromises = existingImages.map(async (f) => {
+        const test = await fetch(f);
+        const blob = await test.blob();
+
+        const file = new File([blob], "image.jpg", { type: "image/jpeg" });
+        return file;
+      });
+
+      const files = await Promise.all(filesPromises);
+
+      files.forEach((file) => {
+        formData.append("Files", file);
+      });
+
       const response = await axios.put(
         `http://test-api.com/api/v1/about/2`,
         formData
       );
 
-      alert("Successfully Updated");
-      window.location.reload(false);
+      setImages([]);
+
+      // alert("Successfully Updated");
+
+      // window.location.reload();
     } catch (error) {
       console.error("Error:", error);
     }
@@ -45,6 +89,8 @@ const AboutEdit = () => {
       setValue(programData?.title || "");
 
       setProgram(programData);
+      console.log("hey");
+      setExistingImages(programData?.file);
       return {
         title: programData?.title,
         description: programData?.description,
@@ -57,6 +103,8 @@ const AboutEdit = () => {
   });
 
   const { register, control, handleSubmit } = form;
+
+  console.log({ existingImages });
 
   const handleFileChange = (e) => {
     const fileList = e.target.files;
@@ -156,14 +204,44 @@ const AboutEdit = () => {
           >
             Images
           </label>
-          <div className="flex gap-[20px] justify-between mb-[50px] flex-wrap">
-            {program.file &&
-              program.file.map((image, index) => (
-                <img
-                  src={image}
-                  alt={index}
-                  className="w-[100px] object-contain h-[100px]"
-                />
+          <div className="flex gap-[5px] mb-[50px] flex-wrap">
+            {/* {program.file &&
+              program.file
+                .concat(images.map((image) => URL.createObjectURL(image)))
+                .map((image, index) => (
+                  <div className="w-[300px]">
+                    <img src={image} alt={index} className=" object-contain" />
+                  </div>
+                ))} */}
+
+            {existingImages &&
+              existingImages.map((image, index) => (
+                <div
+                  onClick={() => {
+                    setExistingImages((prev) =>
+                      prev.filter((p) => p !== image)
+                    );
+                  }}
+                  className="w-[300px]"
+                >
+                  <img src={image} alt={index} className=" object-contain" />
+                </div>
+              ))}
+
+            {images &&
+              images.map((image, index) => (
+                <div
+                  onClick={() => {
+                    setImages((prev) => prev.filter((p) => p !== image));
+                  }}
+                  className="w-[240px]"
+                >
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={index}
+                    className=" object-contain"
+                  />
+                </div>
               ))}
           </div>
           <input
